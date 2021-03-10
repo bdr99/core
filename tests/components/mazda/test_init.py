@@ -77,14 +77,17 @@ async def test_update_auth_failure(hass: HomeAssistant):
     assert len(entries) == 1
     assert entries[0].state == ENTRY_STATE_LOADED
 
+    future_time = dt_util.utcnow() + timedelta(seconds=61)
     with patch(
         "homeassistant.components.mazda.MazdaAPI.validate_credentials",
         side_effect=MazdaAuthenticationException("Login failed"),
     ), patch(
         "homeassistant.components.mazda.MazdaAPI.get_vehicles",
         side_effect=MazdaAuthenticationException("Login failed"),
+    ), patch(
+        "homeassistant.util.dt.utcnow", return_value=future_time
     ):
-        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=61))
+        async_fire_time_changed(hass, future_time)
         await hass.async_block_till_done()
 
     flows = hass.config_entries.flow.async_progress()
